@@ -12,7 +12,11 @@ export class StudentService {
 
   constructor(private httpClient : HttpClient) { }
 
-  getStudent() : Observable <Student[]>{
-    return this.httpClient.get<Student[]>(this.baseApiUrl + '/Student');
+  getStudents() : Observable <Student[]>{
+    return this.httpClient.get<Student[]>(`${this.baseApiUrl }/Student`);
+  }
+
+  getStudent(studentId : string) : Observable<Student>{
+   return this.httpClient.get<Student>(`${this.baseApiUrl}/Student/${studentId}`);
   }
 }
