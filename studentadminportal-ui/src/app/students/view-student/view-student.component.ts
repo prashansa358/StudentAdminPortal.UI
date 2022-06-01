@@ -18,7 +18,7 @@ export class ViewStudentComponent implements OnInit {
     lastName:'',
     dateOfBirth:'',
     email:'',
-    mobile: 0 ,
+    mobile:0 ,
     genderId:'',
     profileImageUrl:'',
     gender:{
@@ -34,51 +34,50 @@ export class ViewStudentComponent implements OnInit {
 
   isNewStudent = false;
   header = '';
+  displayProfileImageUrl= '';
 
   genderList: Gender[]=[];
 
   constructor(private readonly studentService : StudentService ,private readonly route: ActivatedRoute , private readonly         genderService:GenderService, private snackbar: MatSnackBar ,
     private router : Router) { }
 
-  ngOnInit(): void {
-   this.route.paramMap.subscribe(
-     (params)=>{
-      this.studentId = params.get('id');
+  ngOnInit(): void
+  {
+    this.route.paramMap.subscribe(
+      (params) => {
+        this.studentId = params.get('id');
 
-      if (this.studentId) {
-        // If the route Contains the 'Add'
+        if (this.studentId) {
+          if (this.studentId.toLowerCase() === 'Add'.toLowerCase()) {
+            // -> new Student Functionality
+            this.isNewStudent = true;
+            this.header = 'Add New Student';
+            this.setImage();
+          } else {
+            // -> Existing Student Functionality
+            this.isNewStudent = false;
+            this.header = 'Edit Student';
+            this.studentService.getStudent(this.studentId)
+              .subscribe(
+                (successResponse) => {
+                  this.student = successResponse;
+                  this.setImage();
+                },
+                (errorResponse) => {
+                  this.setImage();
+                }
+              );
+          }
 
-        if(this.studentId.toLocaleLowerCase()== 'Add'.toLocaleLowerCase()){
-          //->new Student Functionality
-          this.isNewStudent = true;
-          this.header = 'Add New Student';
+          this.genderService.getGenderList()
+            .subscribe(
+              (successResponse) => {
+                this.genderList = successResponse;
+              }
+            );
         }
-        else{
-
-        //otherwise
-        //->Existing Student Functionality
-        this.isNewStudent = false;
-        this.header = 'Edit Student';
-
-        this.studentService.getStudent(this.studentId)
-        .subscribe((res)=>
-        {
-          this.student = res;
-
-        }
-        );
-     }
-
-       this.genderService.getGenderList()
-       .subscribe((res)=>
-       {
-         this.genderList = res;
-
-       }
-      );
       }
-     }
-     );
+    );
   }
 
   onUpdate(): void{
@@ -138,4 +137,38 @@ export class ViewStudentComponent implements OnInit {
  );
   }
 
+  uploadImage(event: any): void {
+    if (this.studentId) {
+      const file: File = event.target.files[0];
+      this.studentService.uploadImage(this.student.id, file)
+        .subscribe(
+          (successResponse) => {
+            this.student.profileImageUrl = successResponse;
+            this.setImage();
+
+            // Show a notification
+            this.snackbar.open('Profile Image Updated', undefined, {
+              duration: 2000
+            });
+
+          },
+          (errorResponse) => {
+
+          }
+        );
+
+    }
+
+  }
+
+  private setImage(): void{
+    if(this.student.profileImageUrl){
+      // fetch the Image by Url
+      this.displayProfileImageUrl = this.studentService.getImagePath(this.student.profileImageUrl);
+    }
+    else{
+      // Display a default
+      this.displayProfileImageUrl ='/assets/download1.png';
+    }
+  }
 }
